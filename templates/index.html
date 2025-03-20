@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チャットボット</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="phone-container">
+        <div class="phone-header">
+            <div class="notch"></div>
+            <h1>AI チャット</h1>
+        </div>
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <!-- メッセージがここに追加されます -->
+            </div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="メッセージを入力してください...">
+                <button onclick="sendMessage()">送信</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function addMessage(message, isUser) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = isUser ? 'message user-message' : 'message bot-message';
+            
+            if (!isUser) {
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'bot-icon';
+                iconSpan.innerHTML = '<i class="fas fa-robot"></i>';
+                messageDiv.appendChild(iconSpan);
+            }
+            
+            const textSpan = document.createElement('span');
+            textSpan.className = 'message-text';
+            textSpan.textContent = message;
+            messageDiv.appendChild(textSpan);
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            
+            if (message === '') return;
+            
+            // ユーザーメッセージを表示
+            addMessage(message, true);
+            input.value = '';
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                const data = await response.json();
+                // ボットの応答を表示
+                addMessage(data.response, false);
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('申し訳ありません。エラーが発生しました。', false);
+            }
+        }
+
+        // Enterキーでメッセージを送信
+        document.getElementById('user-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html> 
